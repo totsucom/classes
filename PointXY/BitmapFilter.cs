@@ -411,6 +411,7 @@ namespace Geometory
         }
 
         //ope1,ope2は同じサイズであること
+        //
         private static Bitmap _filtering(Bitmap bmp, float[,] ope1, float[,] ope2 = null)
         {
             int xadj = -ope1.GetLength(0) / 2;
