@@ -20,33 +20,43 @@ namespace VectorFont
 
         public VectorArray GetVectors(int utf16)
         {
-            int loc = UTF16ToLocation(utf16);
-            if (loc < 0) return null;
-
-            int n = BitConverter.ToInt16(vect, loc);
-            if (n < 0) return null;
-
-            VectorArray va = new VectorArray(n);
-            loc += 2;
-
-            while (n-- > 0)
+            if (utf16 != 32)
             {
-                VectorUnit.Command c;
-                if (vect[loc] == (byte)'M')
-                    c = VectorUnit.Command.MOVETO;
-                else if (vect[loc] == (byte)'L')
-                    c = VectorUnit.Command.LINETO;
-                else
-                    throw new Exception("Unknown command");
+                int loc = UTF16ToLocation(utf16);
+                if (loc < 0) return null;
 
-                float x = BitConverter.ToSingle(vect, loc + 1);
-                float y = BitConverter.ToSingle(vect, loc + 5);
-                va.Add(c, x, y);
+                int n = BitConverter.ToInt16(vect, loc);
+                if (n < 0) return null;
 
-                loc += 9;
+                VectorArray va = new VectorArray(n);
+                loc += 2;
+
+                while (n-- > 0)
+                {
+                    VectorUnit.Command c;
+                    if (vect[loc] == (byte)'M')
+                        c = VectorUnit.Command.MOVETO;
+                    else if (vect[loc] == (byte)'L')
+                        c = VectorUnit.Command.LINETO;
+                    else
+                        throw new Exception("Unknown command");
+
+                    float x = BitConverter.ToSingle(vect, loc + 1);
+                    float y = BitConverter.ToSingle(vect, loc + 5);
+                    va.Add(c, x, y);
+
+                    loc += 9;
+                }
+                return va;
             }
-
-            return va;
+            else
+            {
+                //スペースの処理
+                VectorArray va = new VectorArray(2);
+                va.Add(VectorUnit.Command.NONE, 0.0F, 0.0F);
+                va.Add(VectorUnit.Command.NONE, 0.3F, 0.0F);
+                return va;
+            }
         }
 
         /*
@@ -204,6 +214,7 @@ namespace VectorFont
     {
         private VectorUnit[] ar;
         private int dataCount;
+        private float height = 1.0F;//文字の初期高さ
 
         public VectorArray(int array_size)
         {
@@ -240,6 +251,7 @@ namespace VectorFont
                 ar[i].x *= sx;
                 ar[i].y *= sy;
             }
+            height *= sy;
         }
 
         /*
@@ -265,8 +277,8 @@ namespace VectorFont
             }
 
             //xminがleft marginを表しているので、xmax+xminで文字幅になる
-            //高さは1.0固定
-            return new SizeF(xmax + xmin, 1.0F);
+            //因みにnormalized_fontはmargin=0
+            return new SizeF(xmax + xmin, height);
         }
 
         /*
